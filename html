@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogo da Fazenda Avançado</title>
+</head>
+<body>
+  <div id="game-container">
+    <h1>Jogo da Fazenda Avançado</h1>
+    <div id="info">
+      <span>Dinheiro: $<span id="money">200</span></span>
+      <span>Sementes: <span id="seeds-wheat">5</span> Trigo | <span id="seeds-carrot">3</span> Cenoura | <span id="seeds-corn">2</span> Milho</span>
+      <span>Nível: <span id="level">1</span> (<span id="xp">0</span>/100 XP)</span>
+    </div>
+    <div id="farm"></div>
+    <div id="controls">
+      <select id="crop-type">
+        <option value="wheat">Trigo</option>
+        <option value="carrot">Cenoura</option>
+        <option value="corn">Milho</option>
+      </select>
+      <button onclick="buySeeds()">Comprar Semente</button>
+      <button onclick="sellCrops()">Vender Colheitas</button>
+      <button onclick="waterCrops()">Regar Culturas</button>
+    </div>
+    <div id="upgrades">
+      <button class="upgrade-button tooltip" onclick="buyUpgrade('growth')" id="growth-upgrade">
+        Melhoria de Crescimento ($200)
+        <span class="tooltiptext">Reduz tempo de crescimento em 10%</span>
+      </button>
+      <button class="upgrade-button tooltip" onclick="buyUpgrade('yield')" id="yield-upgrade">
+        Melhoria de Rendimento ($300)
+        <span class="tooltiptext">Aumenta lucro em 20%</span>
+      </button>
+    </div>
+    <div id="message"></div>
+  </div>
+
+  <script>
+    let money = 200;
+    let seeds = { wheat: 5, carrot: 3, corn: 2 };
+    let plots = [];
+    let level = 1;
+    let xp = 0;
+    let upgrades = { growth: 0, yield: 0 };
+
+    const cropData = {
+      wheat: { cost: 10, sellPrice: 20, growthTime: 5000 },
+      carrot: { cost: 15, sellPrice: 30, growthTime: 7000 },
+      corn: { cost: 20, sellPrice: 40, growthTime: 9000 }
+    };
+
+    const farm = document.getElementById('farm');
+    const moneyDisplay = document.getElementById('money');
+    const seedsWheatDisplay = document.getElementById('seeds-wheat');
+    const seedsCarrotDisplay = document.getElementById('seeds-carrot');
+    const seedsCornDisplay = document.getElementById('seeds-corn');
+    const levelDisplay = document.getElementById('level');
+    const xpDisplay = document.getElementById('xp');
+    const messageDisplay = document.getElementById('message');
+    const cropTypeSelect = document.getElementById('crop-type');
+
+    // Criar 12 lotes de terra
+    for (let i = 0; i < 12; i++) {
+      const plot = document.createElement('div');
+      plot.classList.add('plot', 'empty');
+      plot.dataset.index = i;
+      plot.onclick = () => plantSeed(i);
+      farm.appendChild(plot);
+      plots.push({ state: 'empty', crop: null, timer: null, watered: false });
+    }
+
+    function plantSeed(index) {
+      const crop = cropTypeSelect.value;
+      if (seeds[crop] > 0 && plots[index].state === 'empty') {
+        seeds[crop]--;
+        plots[index].state = 'planted';
+        plots[index].crop = crop;
+        farm.children[index].classList.remove('empty');
+        farm.children[index].classList.add(`planted-${crop}`);
+        updateDisplays();
+        messageDisplay.textContent = '';
+
+        // Calcular tempo de crescimento com upgrade
+        let growthTime = cropData[crop].growthTime * (1 - upgrades.growth * 0.1);
+        plots[index].timer = setTimeout(() => {
+          plots[index].state = 'grown';
+          farm.children[index].classList.remove(`planted-${crop}`);
+          farm.children[index].classList.add(`grown-${crop}`);
+        }, growthTime);
+      } else if (seeds[crop] === 0) {
+        messageDisplay.textContent = `Sem sementes de ${crop}! Compre mais.`;
+      }
+    }
+
+    function buySeeds() {
+      const crop = cropTypeSelect.value;
+      if (money >= cropData[crop].cost) {
+        money -= cropData[crop].cost;
+        seeds[crop]++;
+        updateDisplays();
+        messageDisplay.textContent = `Semente de ${crop} comprada!`;
+      } else {
+        messageDisplay.textContent = 'Dinheiro insuficiente!';
+      }
+    }
+
+    function sellCrops() {
+      let totalEarned = 0;
+      let cropsSold = 0;
+      plots.forEach((plot, index) => {
+        if (plot.state === 'grown') {
+          const crop = plot.crop;
+          const basePrice = cropData[crop].sellPrice;
+          const profit = basePrice * (1 + upgrades.yield * 0.2);
+          totalEarned += profit;
+          cropsSold++;
+          plot.state = 'empty';
+          plot.crop = null;
+          plot.watered = false;
+          farm.children[index].classList.remove(`grown-${crop}`);
+          farm.children[index].classList.add('empty');
+          clearTimeout(plot.timer);
+        }
+      });
+      money += totalEarned;
+      if (cropsSold > 0) {
+        addXp(cropsSold * 10);
+      }
+      updateDisplays();
+      messageDisplay.textContent = cropsSold > 0 ? `Vendeu ${cropsSold} colheitas por $${totalEarned.toFixed(2)}!` : 'Nenhuma colheita para vender!';
+    }
+
+    function waterCrops() {
+      let watered = false;
+      plots.forEach((plot, index) => {
+        if (plot.state === 'planted' && !plot.watered) {
+          plot.watered = true;
+          watered = true;
+          clearTimeout(plot.timer);
+          const crop = plot.crop;
+          let growthTime = cropData[crop].growthTime * (1 - upgrades.growth * 0.1) * 0.8; // 20% mais rápido
+          plot.timer = setTimeout(() => {
+            plot.state = 'grown';
+            farm.children[index].classList.remove(`planted-${crop}`);
+            farm.children[index].classList.add(`grown-${crop}`);
+          }, growthTime);
+        }
+      });
+      messageDisplay.textContent = watered ? 'Culturas regadas! Crescem 20% mais rápido.' : 'Nenhuma cultura para regar!';
+    }
+
+    function buyUpgrade(type) {
+      const costs = { growth: 200, yield: 300 };
+      if (money >= costs[type] && upgrades[type] < 3) {
+        money -= costs[type];
+        upgrades[type]++;
+        updateDisplays();
+        messageDisplay.textContent = `Melhoria de ${type === 'growth' ? 'Crescimento' : 'Rendimento'} comprada! Nível ${upgrades[type]}`;
+        if (upgrades[type] === 3) {
+          document.getElementById(`${type}-upgrade`).disabled = true;
+          document.getElementById(`${type}-upgrade`).textContent = `Melhoria ${type === 'growth' ? 'Crescimento' : 'Rendimento'} Máx.`;
+        } else {
+          document.getElementById(`${type}-upgrade`).textContent = `Melhoria de ${type === 'growth' ? 'Crescimento' : 'Rendimento'} ($${costs[type] + 100})`;
+        }
+      } else if (upgrades[type] >= 3) {
+        messageDisplay.textContent = 'Melhoria já está no máximo!';
+      } else {
+        messageDisplay.textContent = 'Dinheiro insuficiente!';
+      }
+    }
+
+    function addXp(amount) {
+      xp += amount;
+      while (xp >= 100 * level) {
+        xp -= 100 * level;
+        level++;
+        messageDisplay.textContent = `Parabéns! Você subiu para o nível ${level}!`;
+      }
+      updateDisplays();
+    }
+
+    function updateDisplays() {
+      moneyDisplay.textContent = money.toFixed(2);
+      seedsWheatDisplay.textContent = seeds.wheat;
+      seedsCarrotDisplay.textContent = seeds.carrot;
+      seedsCornDisplay.textContent = seeds.corn;
+      levelDisplay.textContent = level;
+      xpDisplay.textContent = xp;
+    }
+  </script>
+</body>
+</html>
