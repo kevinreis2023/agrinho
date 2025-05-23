@@ -1,0 +1,153 @@
+ <style>
+    body {
+      font-family: 'Verdana', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: linear-gradient(to bottom, #87ceeb, #228b22);
+      overflow: hidden;
+    }
+
+    #game-container {
+      background: #f5deb3;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+      width: 800px;
+      text-align: center;
+    }
+
+    #farm {
+      display: grid;
+      grid-template-columns: repeat(6, 100px);
+      gap: 8px;
+      margin: 20px auto;
+    }
+
+    .plot {
+      width: 100px;
+      height: 100px;
+      border: 3px solid #654321;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .plot:hover {
+      transform: scale(1.05);
+    }
+
+    .empty {
+      background: #d2b48c;
+    }
+
+    .planted-wheat::before {
+      content: "🌱";
+      font-size: 40px;
+    }
+
+    .planted-carrot::before {
+      content: "🥕";
+      font-size: 40px;
+    }
+
+    .planted-corn::before {
+      content: "🌽";
+      font-size: 40px;
+    }
+
+    .grown-wheat::before {
+      content: "🌾";
+      font-size: 50px;
+    }
+
+    .grown-carrot::before {
+      content: "🥕";
+      font-size: 50px;
+    }
+
+    .grown-corn::before {
+      content: "🌽";
+      font-size: 50px;
+    }
+
+    #info {
+      display: flex;
+      justify-content: space-around;
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+
+    #controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button, select {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      transition: background 0.3s;
+    }
+
+    button:hover, select:hover {
+      background: #45a049;
+    }
+
+    #message {
+      color: #b22222;
+      font-weight: bold;
+      margin-top: 10px;
+      min-height: 24px;
+    }
+
+    #upgrades {
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+    .upgrade-button {
+      background: #ff9800;
+    }
+
+    .upgrade-button:hover {
+      background: #e68900;
+    }
+
+    .tooltip {
+      position: relative;
+    }
+
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 120px;
+      background: #333;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -60px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+  </style>
